@@ -1,8 +1,8 @@
 package ecommerce.productos.implementacion;
 
-import ecommerce.productos.interfaces.IProducto;
 import ecommerce.productos.enunciados.Categoria;
 import ecommerce.productos.enunciados.Subcategoria;
+import ecommerce.productos.interfaces.IProducto;
 
 public class Producto implements IProducto {
     private final int id; // Inmutable según requerimiento de ID único

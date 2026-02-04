@@ -115,11 +115,11 @@ public class TiendaApp {
 
         switch (op) {
             case 1 -> { // Descuento por Categoría
-                System.out.println("Seleccione Categoría:");
+                System.out.println("--- Categorías ---");
                 for (Categoria cat : Categoria.values()) {
                     System.out.println(cat.ordinal() + ". " + cat.getNombre()); // listado cat
-                    System.out.println();
                 }
+                System.out.println("Seleccione: ");
                 int catIdx = leerEntero(); // lee opcion
                 System.out.println();
                 if (catIdx >= 0 && catIdx < Categoria.values().length) {
@@ -133,10 +133,11 @@ public class TiendaApp {
                 }
             }
             case 2 -> { // Descuento por Subcategoría
-                System.out.println("Seleccione Subcategoría:");
+                System.out.println("--- Subcategorías ---");
                 for (Subcategoria sub : Subcategoria.values()) {
                     System.out.println(sub.ordinal() + ". " + sub.getNombre()); // listado subcat
                 }
+                System.out.println("Seleccione: ");
                 int subIdx = leerEntero(); // lee opcion
                 System.out.println();
                 if (subIdx >= 0 && subIdx < Subcategoria.values().length) {
@@ -309,7 +310,7 @@ public class TiendaApp {
 
             // 4. CONFIRMACIÓN FINAL
             System.out.print("¿Confirmar pago final? (SI/NO): ");
-            String respuesta = sc.next().trim().toLowerCase();
+            String respuesta = sc.nextLine().trim().toLowerCase();
 
             if (respuesta.equals("si") || respuesta.equals("sí") || respuesta.equals("s")) {
                 System.out.println("Procesando pago...");
@@ -459,7 +460,7 @@ public class TiendaApp {
             switch (opcion) {
                 case 1 -> {
                     System.out.print("Nuevo nombre: ");
-                    p.setNombre(sc.next()); // actualiza le nombre producto
+                    p.setNombre(sc.nextLine()); // actualiza le nombre producto
                     System.out.println("Nombre actualizado.");
                     System.out.println();
                 }

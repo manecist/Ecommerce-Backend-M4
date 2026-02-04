@@ -1,6 +1,5 @@
 package ecommerce.productos.implementacion.repositorio;
 
-import ecommerce.productos.enunciados.Categoria;
 import ecommerce.productos.enunciados.Subcategoria;
 import ecommerce.productos.implementacion.Producto;
 import ecommerce.productos.interfaces.IProductoRepository;
