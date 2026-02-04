@@ -36,9 +36,13 @@ public enum Subcategoria {
     }
 
     // Devuelve nombre de padre de categoria
-    public Categoria getPadre() { return padre; }
+    public Categoria getPadre() {
+        return padre;
+    }
 
     // Devuelve el nombre d emi subcategoria
-    public String getNombre() { return nombre; }
+    public String getNombre() {
+        return nombre;
+    }
 }
 
