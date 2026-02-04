@@ -16,8 +16,9 @@ public class DescuentoCategoria implements IReglaDescuento {
     }
 
     // Devuelve si mi producto corresponde a la categoria
-    @Override public boolean aplica(Producto p) {
-        return p.getCategoria() == categoria;
+    @Override
+    public boolean aplica(Producto p) {
+        return p.getSubcategoria().getPadre() == this.categoria;
     }
     // Devuelve el numero decimal que corresponde al porcentaje
     @Override public double getPorcentaje() {
