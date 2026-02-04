@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrdenRepository implements IOrdenRepository {
+    // atributo lista
     private final List<Orden> historial = new ArrayList<>();
 
     @Override
