@@ -1,8 +1,8 @@
 package ecommerce.tienda;
 
 import ecommerce.carrito.CantidadInvalidaException;
-import ecommerce.carrito.CarritoItem;
 import ecommerce.carrito.CarritoService;
+import ecommerce.carrito.Orden;
 import ecommerce.productos.enunciados.Categoria;
 import ecommerce.productos.enunciados.Subcategoria;
 import ecommerce.productos.implementacion.Producto;
@@ -12,7 +12,6 @@ import ecommerce.productos.implementacion.descuentos.DescuentoPorMonto;
 import ecommerce.productos.implementacion.descuentos.DescuentoSubcategoria;
 import ecommerce.productos.implementacion.repositorio.ProductoRepository;
 import ecommerce.productos.interfaces.IProductoRepository;
-import ecommerce.productos.interfaces.IReglaDescuento;
 
 import java.util.List;
 import java.util.Scanner;
@@ -20,8 +19,9 @@ import java.util.Scanner;
 public class TiendaApp {
     // Dependencias
     private static final IProductoRepository repo = new ProductoRepository();
-    private static final DescuentoManager descManager = new DescuentoManager();
+    static final DescuentoManager descManager = new DescuentoManager();
     private static final CarritoService carrito = new CarritoService();
+    private static final TiendaService tiendaService = new TiendaService(repo, descManager);
     private static final Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) {
@@ -55,6 +55,7 @@ public class TiendaApp {
             System.out.println("4. Editar Producto");
             System.out.println("5. Eliminar Producto");
             System.out.println("6. Gestionar Descuentos (ROTATIVOS)");
+            System.out.println("7. Mostrar historial de ventas");
             System.out.println("0. Volver al Menú Principal");
             System.out.print("Seleccione: ");
             op = leerEntero();
@@ -67,6 +68,7 @@ public class TiendaApp {
                 case 4 -> editarProductoAdmin(); // editar peoductos
                 case 5 -> eliminarProductoAdmin(); // elimina productos
                 case 6 -> menuGestionDescuentos(); // gestiona descuentos
+                case 7 -> mostrarHistorialVentas(); // muestra historial de ventas
 
             }
         } while (op != 0);
@@ -79,10 +81,10 @@ public class TiendaApp {
             System.out.println("--- PORTAL DE COMPRAS (USUARIO) ---");
             System.out.println("1. Listar Productos (ID/ nombre / precio)"); //  solo para listar
             System.out.println("2. Buscar Productos (por nombre/cat/sub)"); // solo para buscar
-            System.out.println("2. Agregar al Carrito"); // agrega al carrito
-            System.out.println("3. Ver Carrito y Descuentos Activos"); // ve carrito y desct
-            System.out.println("4. Quitar del carrito"); // vacia carrito
-            System.out.println("5. CONFIRMAR COMPRA"); // confirma compra
+            System.out.println("3. Agregar al Carrito"); // agrega al carrito
+            System.out.println("4. Ver Carrito y Descuentos Activos"); // ve carrito y desct
+            System.out.println("5. Quitar del carrito"); // vacia carrito
+            System.out.println("6. CONFIRMAR COMPRA"); // confirma compra
             System.out.println("0. Volver"); // volver menu
             System.out.print("Seleccione: ");
             op = leerEntero();
@@ -190,12 +192,10 @@ public class TiendaApp {
         try {
             System.out.print("Ingrese ID del producto: ");
             int id = leerEntero(); // lee numero
-            System.out.println();
 
             // Validación: ID existente
             Producto p = repo.buscarPorId(id).orElseThrow(() ->
-                    new Exception("El ID del producto no existe."));
-            System.out.println();
+                    new Exception("\nEl ID del producto no existe."));
 
             System.out.print("Cantidad: ");
             int cant = leerEntero(); // lee cantidad
@@ -254,80 +254,85 @@ public class TiendaApp {
     // **** CONFIRMAR COMPRA ****
     private static void confirmarCompra() {
         try {
-            if (carrito.getItems().isEmpty()) { // CARRITO ESTA VACIO DICE:
-                System.out.println("\nEl carrito está vacío.");
+            // 1. Validación Obligatoria: Carrito no vacío
+            if (carrito.getItems().isEmpty()) {
+                System.out.println("\n[AVISO]: El carrito está vacío. Agregue productos antes de comprar.");
                 return;
             }
 
-            double totalBase = carrito.calcularTotalBase(); // PRECIO PRODUCTO FINITO
-            double totalDescuentos = 0; // DSCT PARTE DESDE 0
+            // El service calcula subtotal, descuentos automáticos e IVA.
+            Orden boleta = tiendaService.generarOrden(carrito);
 
-            System.out.println("-- DETALLE DE BOLETA/FACTURACIÓN ---");
+            // 3. UI: Mostrar la Boleta Detallada
+            System.out.println("========================================");
+            System.out.println("          DETALLE DE SU COMPRA          ");
+            System.out.println("========================================");
 
-            // CREO UN FOR PARA LEER LOS DSCTS
-            for (IReglaDescuento regla : descManager.getReglasActivas()) {
+            // Mostramos desglose de productos para transparencia
+            carrito.getItems().forEach(item ->
+                    System.out.printf("- %-15s x%d  $%,.2f%n",
+                            item.getProducto().getNombre(), item.getCantidad(), item.getSubtotal())
+            );
 
-                // Reglas que aplican producto por producto (Categoría / Subcategoría) busca si corresponde aplicar dsct
-                if (regla instanceof DescuentoCategoria || regla instanceof DescuentoSubcategoria) {
-                    for (CarritoItem item : carrito.getItems()) {
-                        if (regla.aplica(item.getProducto())) {
-                            double ahorro = item.getSubtotal() * regla.getPorcentaje(); // se aplica al valor finito del producto
-                            totalDescuentos += ahorro;
-                            System.out.printf("\n[PROMO] %s aplicada a %s: -$%,.2f%n",
-                                    regla.getDescripcion(), item.getProducto().getNombre(), ahorro);
-                        } // envia listado de los que si aplican
-                    }
-                }
-
-                // Reglas que aplican al total de la compra (Monto Mínimo)
-                if (regla instanceof DescuentoPorMonto dsctMonto) {
-                    if (dsctMonto.aplicaAlTotal(totalBase)) {
-                        double ahorro = totalBase * dsctMonto.getPorcentaje(); // se aplica al total de los productos
-                        totalDescuentos += ahorro;
-                        System.out.printf("\n[GLOBAL] %s: -$%,.2f%n", regla.getDescripcion(), ahorro);
-                    }// muestra ahorro
-                }
-            }
-
-            // CÁLCULOS FINALES
-            double totalNeto = totalBase - totalDescuentos; // precio producto finito menos total dsctos
-            double iva = totalNeto * 0.19; // aplica el iva al subtotal de productos
-            double totalFinal = totalNeto + iva; // da valor final
-
-            // Validación de negocio: Límite de transacción
-            if (totalFinal > 3000000) {
-                throw new Exception("\nLímite de transacción excedido. Favor comunicarse con su banco.");
-            }
-
-            // 3. MOSTRAR BOLETA
             System.out.println("----------------------------------------");
-            System.out.printf("SUBTOTAL BASE:   $%,.2f%n", totalBase); // muestra precio finito producto
-            System.out.printf("TOTAL DESCUENTOS:-$%,.2f%n", totalDescuentos); // da la suma total de descuentos
-            System.out.printf("VALOR NETO:      $%,.2f%n", totalNeto); // arroja valor del producto menos el dsct
-            System.out.printf("IVA (19%%):       $%,.2f%n", iva); // nos ca el valor del iva
-            System.out.printf("TOTAL A PAGAR:   $%,.2f%n", totalFinal); // envia el valor final de la compra
+            System.out.printf("SUBTOTAL BASE:     $%,12.2f%n", boleta.getSubtotal());
+            System.out.printf("DESCUENTOS:       -$%,12.2f%n", boleta.getDescuento());
+            System.out.printf("IVA (19%%):         $%,12.2f%n", boleta.getIva());
             System.out.println("----------------------------------------");
+            System.out.printf("TOTAL A PAGAR:     $%,12.2f%n", boleta.getTotalFinal());
 
-            // 4. CONFIRMACIÓN FINAL
-            System.out.print("¿Confirmar pago final? (SI/NO): ");
-            String respuesta = sc.nextLine().trim().toLowerCase();
+            // 4. Interacción: Confirmación Final
+            System.out.print("\n¿Desea confirmar el pago final? (SI/NO): ");
+            String respuesta = sc.next().trim().toLowerCase();
 
             if (respuesta.equals("si") || respuesta.equals("sí") || respuesta.equals("s")) {
-                System.out.println("Procesando pago...");
+
+                // Simulación de registro de la orden en el historial (Datos en memoria)
+                tiendaService.registrarVenta(boleta);
+
+                System.out.println("\nProcesando pago...");
                 System.out.println("========================================");
-                System.out.println("      ORDEN GENERADA EXITOSAMENTE       ");
-                System.out.println("      Ticket N°: " + (int)(Math.random() * 10000));
+                System.out.println("      " + boleta); // Muestra Ticket N°, Fecha y Total
                 System.out.println("========================================");
 
-                carrito.vaciar();
-                System.out.println("\n¡Pago exitoso! El carrito se ha vaciado.");
+                carrito.vaciar(); // Requerimiento: Vaciar el carrito
+                System.out.println("¡Compra exitosa! Gracias por preferir Magical Store.");
+
             } else {
-                throw new Exception("\nOperación cancelada por el usuario.");
+                // Si el usuario se arrepiente, lanzamos excepción para no vaciar el carrito
+                throw new Exception("\nOperación cancelada por el usuario. No se realizó el cobro.");
             }
 
         } catch (Exception e) {
             System.out.println("\n[ERROR EN LA COMPRA]: " + e.getMessage());
-            System.out.println("\nLos productos permanecen en su carrito.");
+            System.out.println("\nSus productos permanecen en el carrito.");
+            System.out.println();
+        }
+    }
+
+    private static void mostrarHistorialVentas() {
+        System.out.println("\n--- HISTORIAL DE VENTAS ---");
+
+        // Obtenemos los datos desde el Service (Capa de Lógica)
+        List<Orden> ventas = tiendaService.getHistorialVentas();
+
+        if (ventas.isEmpty()) { // si esta vacio
+            System.out.println("\nNo se han registrado ventas en esta sesión.");
+            System.out.println();
+        } else {
+            // Formato de tabla simple para mayor orden
+            System.out.println("------------------------------------------------------------");
+            ventas.forEach(System.out::println);
+            System.out.println("------------------------------------------------------------");
+
+            // Cálculo de métrica de negocio usando Streams
+            double recaudacionTotal = ventas.stream()
+                    .mapToDouble(Orden::getTotalFinal)
+                    .sum();
+
+            System.out.printf("CANTIDAD DE TRANSACCIONES: %d%n", ventas.size());
+            System.out.printf("TOTAL RECAUDADO EN CAJA:   $%,.2f%n", recaudacionTotal);
+            System.out.println();
         }
     }
 
@@ -524,7 +529,7 @@ public class TiendaApp {
     private static int leerEntero() {
         try {
             String entrada = sc.next(); // Lee la palabra ingresada
-            return Integer.parseInt(entrada); // Intenta convertirla a número
+            return Integer.parseInt(entrada); // Intenta convertirla a número entero
         } catch (NumberFormatException e) {
             System.out.println("¡Error! Debe ingresar un número entero válido.");
             return -1; // Retorna un valor que tus switch manejarán como "default"
@@ -542,6 +547,7 @@ public class TiendaApp {
             String entradaLimpia = entrada.replace(',', '.');
 
             return Double.parseDouble(entradaLimpia);
+            // lo convierte a un double correctamente aceptado independiente de . o ,
         } catch (NumberFormatException e) {
             System.out.println("¡Error! Ingrese un número válido (ejemplo: 0.15 o 0,15).");
             return 0.0;
