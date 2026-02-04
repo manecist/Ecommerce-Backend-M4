@@ -294,7 +294,7 @@ public class TiendaApp {
             double totalFinal = totalNeto + iva; // da valor final
 
             // Validación de negocio: Límite de transacción
-            if (totalFinal > 10000000) {
+            if (totalFinal > 3000000) {
                 throw new Exception("\nLímite de transacción excedido. Favor comunicarse con su banco.");
             }
 
