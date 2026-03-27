@@ -36,13 +36,13 @@ Java • Spring Boot • MySQL • JPA
 
 1. Abrir en IntelliJ o NetBeans
 2. Configurar base de datos
-3. Ejecutar aplicación Spring Boot
+3. Ejecutar aplicación Java TiendaApp 
 
 ---
 
 ## 🚀 Mejoras futuras
 
-* Seguridad con JWT
-* API REST completa
+* Migracion a Spring boot
+* Seguridad con security y JWT
 * Integración con frontend
 
