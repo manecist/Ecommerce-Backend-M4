@@ -1,5 +1,12 @@
 # ⚙️ Ecommerce Backend
 
+Backend de aplicación ecommerce desarrollado con Java y Spring Boot como parte de mi formación Full Stack.
+
+🔗 Parte de proyecto completo:
+Frontend | Backend | Base de Datos | CRUD
+
+---
+
 ## 📌 Descripción
 
 Desarrollo del backend de una aplicación ecommerce utilizando Java y Spring Boot.
@@ -36,7 +43,8 @@ Java • Spring Boot • MySQL • JPA
 
 1. Abrir en IntelliJ o NetBeans
 2. Configurar base de datos
-3. Ejecutar aplicación Java TiendaApp 
+3. Ejecutar aplicación Java TiendaApp
+4. Interactuar desde consola
 
 ---
 
