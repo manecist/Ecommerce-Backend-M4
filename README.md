@@ -54,3 +54,7 @@ Java • Spring Boot • MySQL • JPA
 * Seguridad con security y JWT
 * Integración con frontend
 
+
+## Videos de la ejecución
+
+Las grabaciones del programa funcionando están en [Releases → Videos de la ejecución](https://github.com/manecist/Ecommerce-Backend-M4/releases/tag/videos-ejecucion).
